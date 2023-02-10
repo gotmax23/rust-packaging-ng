@@ -1,9 +1,9 @@
-%global commit 4af0bbcb54aa6f4eb428a7966f602fa9b2437023
+%global commit 9a580febd5e03617ab14030c67c62d383034042b
 %global shortcommit %(c=%{commit}; echo ${c:0:7})
 
 Name:           rust-packaging
 Version:        24~pre.0.git.%{shortcommit}
-Release:        1%{?dist}
+Release:        2%{?dist}
 Summary:        RPM macros and generators for building Rust packages
 License:        MIT
 
@@ -68,6 +68,9 @@ install -D -p -m 0644 -t %{buildroot}/%{_fileattrsdir} fileattrs/cargo.attr
 %{_fileattrsdir}/cargo.attr
 
 %changelog
+* Fri Feb 10 2023 Fabio Valentini <decathorpe@gmail.com> - 24~pre.0.git.9a580fe-2
+- Bump to commit 9a580fe.
+
 * Fri Feb 10 2023 Fabio Valentini <decathorpe@gmail.com> - 24~pre.0.git.4af0bbc-1
 - Initial packaging.
 
