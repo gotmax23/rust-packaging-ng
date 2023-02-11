@@ -1,4 +1,7 @@
 %bcond_without check
+%if %{defined el9}
+%global python3_pkgversion 3.11
+%endif
 
 %global commit e1ff24ed84dc6801458df5609921f33229d03895
 %global shortcommit %(c=%{commit}; echo ${c:0:7})
@@ -14,7 +17,10 @@ Source:         %{url}/archive/%{commit}/cargo2rpm-%{shortcommit}.tar.gz
 
 BuildArch:      noarch
 
-BuildRequires:  python3-devel
+BuildRequires:  python%{python3_pkgversion}-devel
+%if %{with check}
+BuildRequires:  %{py3_dist pytest}
+%endif
 
 Requires:       cargo
 
@@ -25,7 +31,7 @@ Low-level translation layer between cargo and RPM.
 %autosetup -n cargo2rpm-%{shortcommit} -p1
 
 %generate_buildrequires
-%pyproject_buildrequires -t
+%pyproject_buildrequires
 
 %build
 %pyproject_wheel
@@ -35,7 +41,7 @@ Low-level translation layer between cargo and RPM.
 
 %check
 %if %{with check}
-%tox
+%pytest
 %endif
 
 %files
