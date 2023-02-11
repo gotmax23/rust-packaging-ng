@@ -1,10 +1,10 @@
 %bcond_without check
 
-%global commit adf2cb9bace19c19290ae7e30d1a8023637315eb
+%global commit 5808e2d96a120af2c4f29ad9573c620a64301d19
 %global shortcommit %(c=%{commit}; echo ${c:0:7})
 
 Name:           cargo2rpm
-Version:        0.1.0~pre.0.git.%{shortcommit}
+Version:        0.1.0~pre.1.git.%{shortcommit}
 Release:        1%{?dist}
 Summary:        Translation layer between cargo and RPM
 License:        MIT
@@ -46,6 +46,9 @@ Low-level translation layer between cargo and RPM.
 %{python3_sitelib}/cargo2rpm/
 
 %changelog
+* Sat Feb 11 2023 Fabio Valentini <decathorpe@gmail.com> - 0.1.0~pre.1.git.5808e2d-1
+- Bump to commit 5808e2d.
+
 * Fri Feb 10 2023 Fabio Valentini <decathorpe@gmail.com> - 0.1.0~pre.0.git.adf2cb9-1
 - Initial packaging.
 
