@@ -29,7 +29,6 @@ Requires:       cargo2rpm
 Requires:       cargo-rpm-macros
 
 # obsolete old Provides
-Obsoletes:      rust2rpm < 24
 Obsoletes:      cargo-inspector < 24
 
 # obsolete + provide removed Python subpackages
