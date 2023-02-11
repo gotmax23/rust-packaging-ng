@@ -1,5 +1,8 @@
 # tests have not been fixed for required spec file generation changes
 %bcond_with check
+%if %{defined el9}
+%global python3_pkgversion 3.11
+%endif
 
 %global commit 3443c98887f019eab11903f1fc76f086cbf0814c
 %global shortcommit %(c=%{commit}; echo ${c:0:7})
@@ -22,6 +25,7 @@ BuildRequires:  python3-devel
 
 %if %{with check}
 BuildRequires:  cargo
+BuildRequires:  %{py3_dist pytest}
 %endif
 
 Requires:       cargo
@@ -32,10 +36,15 @@ Requires:       cargo-rpm-macros
 Obsoletes:      cargo-inspector < 24
 
 # obsolete + provide removed Python subpackages
-Provides:       python3-rust2rpm = %{version}-%{release}
 Obsoletes:      python3-rust2rpm < 24
-Provides:       python3-rust2rpm-core = %{version}-%{release}
 Obsoletes:      python3-rust2rpm-core < 24
+
+# The python3.11 version should not Provide python3-XXX (it's not sufficiently
+# compatible), but it should Obsolete the old version.
+%if "%{python3_pkgversion}" == "3"
+Provides:       python3-rust2rpm-core = %{version}-%{release}
+Provides:       python3-rust2rpm = %{version}-%{release}
+%endif
 
 %description
 rust2rpm is a tool that automates the generation of RPM spec files for
@@ -45,7 +54,7 @@ Rust crates.
 %autosetup -n rust2rpm-%{shortcommit} -p1
 
 %generate_buildrequires
-%pyproject_buildrequires -t
+%pyproject_buildrequires
 
 %build
 %pyproject_wheel
@@ -58,7 +67,7 @@ rm %{buildroot}/%{_bindir}/cargo-inspector
 
 %check
 %if %{with check}
-%tox
+%pytest
 %endif
 
 %files
