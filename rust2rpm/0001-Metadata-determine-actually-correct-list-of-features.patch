@@ -1,0 +1,72 @@
+From a0b4b78a01cb511ad9710a58e6803c1ac7a00dd0 Mon Sep 17 00:00:00 2001
+From: Fabio Valentini <decathorpe@gmail.com>
+Date: Sat, 11 Feb 2023 01:27:42 +0100
+Subject: [PATCH 1/2] Metadata: determine actually correct list of features
+
+---
+ rust2rpm/core/metadata.py    | 6 +++---
+ rust2rpm/generator.py        | 4 ++++
+ rust2rpm/templates/main.spec | 1 -
+ 3 files changed, 7 insertions(+), 4 deletions(-)
+
+diff --git a/rust2rpm/core/metadata.py b/rust2rpm/core/metadata.py
+index 4ec0895..b5759e3 100644
+--- a/rust2rpm/core/metadata.py
++++ b/rust2rpm/core/metadata.py
+@@ -255,6 +255,7 @@ class Metadata:
+         self.dependencies = {}
+         self.dev_dependencies = set()
+         self._path = None
++        self.features = set()
+ 
+     @property
+     def description(self):
+@@ -319,9 +320,8 @@ class Metadata:
+                 continue
+             deps_by_name[dep["rename"] or dep["name"]].append(Dependency.from_json(dep))
+ 
+-        # FIXME: handle "foo?/bar" style feature dependencies
+-        # FIXME: handle "dep:foo/bar" style feature dependencies
+-        # c.f. https://pagure.io/fedora-rust/rust2rpm/issue/186
++        self.features.update(md["features"].keys())
++        self.features.add("default")
+ 
+         deps_by_feature = {}
+         local_features = set(md["features"]) | set(d["rename"] for d in md["dependencies"] if d["rename"] is not None)
+diff --git a/rust2rpm/generator.py b/rust2rpm/generator.py
+index 76875f7..eeebf96 100644
+--- a/rust2rpm/generator.py
++++ b/rust2rpm/generator.py
+@@ -56,6 +56,9 @@ def spec_file_render(
+     # sort binaries by name for consistent ordering
+     bins.sort(key=operator.attrgetter("name"))
+ 
++    features = [*metadata.features]
++    features.insert(0, None)
++
+     kwargs = {
+         "generator_version": __version__,
+         "target": args.target,
+@@ -70,6 +73,7 @@ def spec_file_render(
+         "license_files": license_files,
+         "distconf": distconf,
+         "all_features": all_features,
++        "features": features,
+     }
+ 
+     if is_bin:
+diff --git a/rust2rpm/templates/main.spec b/rust2rpm/templates/main.spec
+index 13b9bfd..3398dc1 100644
+--- a/rust2rpm/templates/main.spec
++++ b/rust2rpm/templates/main.spec
+@@ -133,7 +133,6 @@ Requires:       {{ req }}
+ {% endif -%}
+ 
+ {% if include_devel %}
+-  {% set features = metadata.dependencies.keys()|list %}
+   {% do features.remove(None) %}
+   {% do features.remove("default") %}
+   {% set features = features|sort %}
+-- 
+2.39.1
+

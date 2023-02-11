@@ -1,16 +1,20 @@
-%bcond_without check
+# tests have not been fixed for required spec file generation changes
+%bcond_with check
 
 %global commit 3443c98887f019eab11903f1fc76f086cbf0814c
 %global shortcommit %(c=%{commit}; echo ${c:0:7})
 
 Name:           rust2rpm
 Version:        24~pre.0.git.%{shortcommit}
-Release:        1%{?dist}
+Release:        2%{?dist}
 Summary:        Generate RPM spec files for Rust crates
 License:        MIT
 
 URL:            https://pagure.io/fedora-rust/rust2rpm
 Source:         %{url}/archive/%{commit}/rust2rpm-%{shortcommit}.tar.gz
+
+Patch:          0001-Metadata-determine-actually-correct-list-of-features.patch
+Patch:          0002-account-for-new-dep-foo-syntax-when-patching-foreign.patch
 
 BuildArch:      noarch
 
@@ -67,6 +71,9 @@ rm %{buildroot}/%{_bindir}/cargo-inspector
 %{python3_sitelib}/rust2rpm/
 
 %changelog
+* Sat Feb 11 2023 Fabio Valentini <decathorpe@gmail.com> - 24~pre.0.git.3443c98-2
+- Backport a few fixes from my fork.
+
 * Fri Feb 10 2023 Fabio Valentini <decathorpe@gmail.com> - 24~pre.0.git.3443c98-1
 - Initial packaging.
 

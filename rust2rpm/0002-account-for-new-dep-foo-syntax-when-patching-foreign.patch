@@ -1,0 +1,85 @@
+From f8ea7144d8f039ce238866f5e9c6df41973c2113 Mon Sep 17 00:00:00 2001
+From: Fabio Valentini <decathorpe@gmail.com>
+Date: Sat, 11 Feb 2023 01:42:00 +0100
+Subject: [PATCH 2/2] account for new dep:foo syntax when patching foreign
+ dependencies
+
+---
+ rust2rpm/__main__.py | 20 +++++++++++++-------
+ 1 file changed, 13 insertions(+), 7 deletions(-)
+
+diff --git a/rust2rpm/__main__.py b/rust2rpm/__main__.py
+index fea8717..2af8b63 100644
+--- a/rust2rpm/__main__.py
++++ b/rust2rpm/__main__.py
+@@ -218,7 +218,7 @@ def filter_out_features_re(dropped_features):
+     )
+ 
+ 
+-def drop_foreign_dependencies(lines):
++def drop_foreign_dependencies(lines, features):
+     dropped_lines = 0
+     dropped_optional_deps = set()
+     good_lines = []
+@@ -243,12 +243,17 @@ def drop_foreign_dependencies(lines):
+             if not keep:
+                 # dropped feature was optional:
+                 # remove occurrences from feature dependencies
+-                dropped_optional_deps.add(feature)
++                if feature in features:
++                    dropped_optional_deps.add(feature)
++                else:
++                    dropped_optional_deps.add(f"dep:{feature}")
+             else:
+                 # optional dependency occurs in multiple targets:
+                 # do not drop from feature dependencies
+                 if feature in dropped_optional_deps:
+                     dropped_optional_deps.remove(feature)
++                if f"dep:{feature}" in dropped_optional_deps:
++                    dropped_optional_deps.remove(f"dep:{feature}")
+ 
+         elif line.startswith("["):
+             # previous section ended, let's keep printing lines again
+@@ -287,7 +292,7 @@ def make_diff(path, lines1, mtime1, lines2, mtime2):
+     )
+ 
+ 
+-def make_patches(args, version, toml):
++def make_patches(args, version, toml, features):
+     """Returns up to two patches (automatic and manual).
+ 
+     For the manual patch, an editor is spawned on toml and a diff is
+@@ -311,7 +316,7 @@ def make_patches(args, version, toml):
+     # calculated metadata and generated spec file will not reflect the patches
+     # to Cargo.toml that were generated here.
+ 
+-    if toml_after := args.patch_foreign and drop_foreign_dependencies(toml_before):
++    if toml_after := args.patch_foreign and drop_foreign_dependencies(toml_before, features):
+         # remove original Cargo.toml file
+         os.remove(toml)
+ 
+@@ -423,9 +428,9 @@ def make_diff_metadata(args, crate, version):
+         else:
+             if args.store_crate:
+                 raise ValueError("--store-crate can only be used for a crate")
+-
+             toml, crate, version, doc_files, license_files = local_toml(crate, version)
+-            diffs = make_patches(args, version, toml)
++            metadata_orig = Metadata.from_file(toml)
++            diffs = make_patches(args, version, toml, metadata_orig[0].features)
+             metadata = Metadata.from_file(toml)
+             if len(metadata) > 1:
+                 log.warn(f"More than one set of metadata found for {toml}, using the first one.")
+@@ -438,7 +443,8 @@ def make_diff_metadata(args, crate, version):
+         if not license_files:
+             log.error(f"No license files detected in {crate!r}.")
+ 
+-        diffs = make_patches(args, version, toml)
++        metadata_orig = Metadata.from_file(toml)
++        diffs = make_patches(args, version, toml, metadata_orig[0].features)
+         metadata = Metadata.from_file(toml)
+         if len(metadata) > 1:
+             log.warn(f"More than one set of metadata found for {toml}, using the first one.")
+-- 
+2.39.1
+
